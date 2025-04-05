@@ -9,6 +9,7 @@ import pandas as pd
 from openpyxl import load_workbook
 # carrega planilha excel .xlsx
 # worklbook = tabela
+from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 # Font fontes e PatternFill cores de fundos
 from openpyxl.utils import get_column_letter
@@ -59,7 +60,7 @@ def formatar_tab(arq_excel):
     wb = load_workbook(arq_excel)
     ws = wb["tabela_RPA"]
 
-    # wb = worldworkbook
+    # wb = workbook
     # load_workbook = carrega o arq excel
     # ws = worksheet - aba específica - lembrando que ao criar vem com 3 abas
 
@@ -128,9 +129,9 @@ def mouse ():
         print("\nCaptura interrompida")
 
 # __________________________________________________SALVAR E PRINTAR ARQ ___________________________________________________________#      
-def salvar_exc(): 
-    wb.save(arq_excel)
-    print(arq_excel)
+def salvar_exc(arq_excel): 
+    wb.save(arq_excel)  
+    print(arq_excel)   
 
 # ___________________________________________________ AUTOMATIZANDO _________________________________________________________________#
 print("Automatizando projeto bloco notas")
@@ -138,12 +139,20 @@ print("Automatizando projeto bloco notas")
 
 # __________ ABRIR BLOCO __________
 
-def abrir_bloco():
-    if df.iloc[0]["tipo"] == "click":
+def abrir_bloco(zerado = False):
+    
+    if zerado:
         pag.press("win")
         pag.write("bloco de notas")
         pag.press("enter")
-        tm.sleep(2)
+        
+    else:
+        if df.iloc[0]["tipo"] == "click":
+            pag.press("win")
+            pag.write("bloco de notas")
+            pag.press("enter")
+            
+    tm.sleep(2)
     
 #iloc = Integrer Location - localiza por int -  acessa linhas do dataframe (df), neste caso [0] é a linha zero 1°, sem ser cabeçalho
 #seria | 0 |abrir file | click | wind+bloco de notas |
@@ -192,30 +201,40 @@ print("Automatização feita - tabela + doc excel criado e tabela usada para abr
 
 # _____________________________________________ RELATÓRIO ________________________________________________________________________#
 
-def gerar_relatorio_simples(tarefas):
-    # 1. Criar arquivo, formatar, add dados
+def gerar_relatorio():
+    
     
 # __________ CRIANDO TABELA __________    
     wb = Workbook()
     planilha = wb.active
     planilha.title = "Relatório"
+#wb recebe workbook = todo o arquivo
+#variável planilha recebe wb - planilha ativa/ visível
+#variável planilha_titulo recebe nome relatório (do arquivo)
     
 # __________ FORMAT CABEÇ, FONT __________
-    cabecalho = ["Tarefa", "Status", "Tempo"]
+    cabecalho = ["Tarefa", "Status", "Tempo (s)"]
     planilha.append(cabecalho)
-    
+# adicionando cabeçalho a planilha    
 
     for celula in planilha[1]:
         celula.font = Font(bold=True)
-    
-# __________ ADD DADOS __________
+# percorra as células na planilha, inicinado na linha 1 
+# deixe as fonte em bold (neste caso a cor será automaticamente preta)
+   
+# __________ DADOS __________
+    tarefas = [
+        {"Tarefa": "Abrir Bloco de Notas", "Status": "Concluído", "Tempo (s)": 2},
+        {"Tarefa": "Tempo de Digitação", "Status": "Concluído", "Tempo (s)": 7},
+        {"Tarefa": "Salvar Arquivo", "Status": "Concluído", "Tempo (s)": 1},
+        {"Tarefa": "Fechar Bloco de Notas", "Status": "Concluído", "Tempo (s)": 1}
+    ]
+ # criei dict com lista de tarefas e o tempo delas
+ 
     for tarefa in tarefas:
-        planilha.append([
-            tarefa["nome"],
-            tarefa["status"],
-            tarefa["tempo"]
-        ])
-    
+        planilha.append([tarefa["Tarefa"], tarefa["Status"], tarefa["Tempo (s)"]])
+# para cada tarefa no dict tarefas adicione tarefa, satus e tempo em segundo
+        
 # __________ FORMAT LARG __________
     for coluna in planilha.columns:
         tamanho_max = 0
@@ -223,9 +242,17 @@ def gerar_relatorio_simples(tarefas):
             if len(str(celula.value)) > tamanho_max:
                 tamanho_max = len(str(celula.value))
         planilha.column_dimensions[coluna[0].column_letter].width = tamanho_max + 2
-    
+#retorna todas colunas do ws/worksheet ex células, em cada coluna
+    # inicia com lagurga 0 na coluna
+    # para cada céluna na coluna
+    # str(celula.value) → Converte o valor para string - converte para string
+    # len(str(celula.value)) = percorre/calcula tamanho do texto e vê se é maior que tamanho máximo do texto
+    # se o tamanho for maior a coluna irá aumentar - ex celular da linha 7 da coluna 2 , o valor da len é 5, então vai atualizar para 5 a largura
+    # ws.column_dimensions[...].width → Define a largura da coluna.- largura da coluna
+    # manho_max + 2 → Adiciona 2 estaços para não ficar rente na linha
+        
 # __________ SALVANDO __________
-    nome_arquivo = "Relatorio_Automação.xlsx"
+    nome_arquivo = "Relatorio.xlsx"
     wb.save(nome_arquivo)
     return nome_arquivo
 
@@ -247,14 +274,16 @@ def main():
     arq_excel = salvar_arq()
     formatar_tab(arq_excel)
     
+    abrir_bloco(zerado=True)
    
-    print("\nIniciando automação do Bloco de Notas")
+    print("\nBloco de notas ativado")
     abrir_bloco()
     digitar()
     salvar()
     fechar()
     
-     
+    relatorio = gerar_relatorio()
+    print(f"\n📊 Relatório gerado em: {os.path.abspath(relatorio)}")     
     print("     🤖       Automação completa      💾") 
     
 
